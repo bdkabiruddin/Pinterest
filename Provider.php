@@ -17,6 +17,11 @@ class Provider extends AbstractProvider implements ProviderInterface
      * {@inheritdoc}
      */
     protected $scopes = ['read_public'];
+    
+    /**
+     * {@inheritdoc}
+     */
+    protected $fields = ['account_type', 'first_name', 'last_name', 'username', 'id', 'image', 'url'];
 
     /**
      * {@inheritdoc}
@@ -43,7 +48,7 @@ class Provider extends AbstractProvider implements ProviderInterface
     protected function getUserByToken($token)
     {
         $response = $this->getHttpClient()->get(
-            'https://api.pinterest.com/v1/me/',
+            'https://api.pinterest.com/v1/me/?fields='.implode(',', $this->fields),
             [
                 'headers' => [
                     'Authorization' => 'Bearer '.$token,
@@ -61,14 +66,14 @@ class Provider extends AbstractProvider implements ProviderInterface
      */
     protected function mapUserToObject(array $user)
     {
-        preg_match('#https://www.pinterest.com/(.+?)/#', $user['data']['url'], $matches);
-        $nickname = $matches[1];
+        $avatarUrl = $user['data']['image']['60x60']['url'];
 
         return (new User())->setRaw($user)->map(
             [
                 'id' => $user['data']['id'],
-                'nickname' => $nickname,
+                'nickname' => $user['data']['username'],
                 'name' => $user['data']['first_name'].' '.$user['data']['last_name'],
+                'avatar' => $avatarUrl
             ]
         );
     }
